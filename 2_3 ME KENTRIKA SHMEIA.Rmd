@@ -1,0 +1,63 @@
+---
+title: "DOE 2^3 ME KENTRIKA SHMEIA"
+author: "Σωκράτης Λιάκος"
+date: "2026-10-19"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+mainfont: Arial
+monofont: Consolas
+---
+Αρχικά σχεδιάζω τον 2^3 με 5 κεντρικά σημεία για να ελέγξω εάν υπάρχει καμπυλότητα, ωστέ να δω αν θα χρειαστεί να παω σε σχεδιασμό αποκριτικής επιφάνειας (πχ CCD).
+
+```{r setup, message=FALSE, warning=FALSE}
+library(rsm)
+library(FrF2)
+set.seed(123)
+design <- FrF2(nruns = 8, nfactors = 3, ncenter = 5, 
+               factor.names = c("X1", "X2", "X3"), 
+               randomize = FALSE)
+```
+
+Φτιάχνω το διάνυσμα της απόκρισης και το προσθέτω στο dataframe.
+
+```{r}
+
+# Oi 13 response variables (8 apo tis gwnies, 5 apo to kentro me thn typikh diataksh)
+response <- c(36, 32, 18, 19, 23, 21, 35, 30, 27, 29, 28, 25, 27)
+design_data <- add.response(design, response)
+```
+
+Κωδικοποιώ για το rsm και βλέπω την τιμή p για να δω αν υπάρχει καμπυλότητα στο μονέλο ώστε να αποφασίσω αν θα κάνω CCD η γενικά κάποια μεθοδολογία αποκριτικής επιφάνειας.
+
+Επίσης κάνω contour plot ανά ζεύγη παραγόντων.
+
+```{r}
+
+df_numeric <- as.data.frame(lapply(design_data, function(x) as.numeric(as.character(x))))
+
+
+rsm_model <- rsm(response ~ FO(X1, X2, X3) + TWI(X1, X2, X3), data = df_numeric)
+
+#  ANOVA me Lack of Fit)
+summary(rsm_model)
+
+# Contour plots ana zevgaria
+contour(rsm_model, ~ X1 + X2 + X3, image = TRUE)
+
+# Residuals
+res <- residuals(rsm_model)
+
+# Shapiro wilk elegxos kanonikothtas
+shapiro.test(res)
+
+# Q-Q Plot
+qqnorm(res, main = "Normal Q-Q Plot ")
+qqline(res, col = "red", lwd = 2)
+```
+
+Βλέπω από την τιμή p = 0.2551>0.05 ότι η καμπυλότητα δεν είναι στατιστικά σημαντική άρα δεν προβαίνω σε CCD.
+
+Επίσης φαίνεται ότι η αλληλεπίδραση BC είναι στατιστικά σημαντική (p<<<0.05 και επίδραση 6.50). Αυτή η αλληλεπίδραση φαίνεται και από το contour plot όταν το A=0, το response μεγιστοποιείται όταν και τα B και το C στο χαμηλο ή στο υψηλό (πορτοκαλί περιοχές). Οι ευθείες δεν είναι περίπου παράλληλες γραμμές όπως στα πρώτα δύο contour plots, αλλά υπερβολές καθώς η αλληλεπίδραση BC όπως είδαμε και στον πίνακα ANOVA, είναι στατιστικά σημαντική.
+
