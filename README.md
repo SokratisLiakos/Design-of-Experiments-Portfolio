@@ -11,7 +11,7 @@ A collection of DoE projects and experimental designs completed during my MSc in
 ## Tools & Libraries
 
 * **Language:** R
-* **Key Packages:** `DoE.base`, `FrF2`, `rsm`, `ggplot2`
+* **Key Packages:** `DoE.base`, `FrF2`, `rsm`
 
 ## Datasets
 
