@@ -1,2 +1,2 @@
 # 2-3-Factorial-Design-with-central-points
-2^3 Factorial Design with central points 
+A $2^3$ factorial design was conducted with 5 center points. The center points were added to test for curvature between treatments and to determine whether to proceed with Response Surface Methodology (RSM), such as a Central Composite Design (CCD). Standard diagnostic tests and plots were generated to verify the assumptions of the Analysis of Variance (ANOVA).
