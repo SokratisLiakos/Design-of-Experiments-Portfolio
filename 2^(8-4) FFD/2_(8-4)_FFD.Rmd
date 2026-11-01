@@ -1,0 +1,108 @@
+---
+title: "DOE 2^(8-4) FFD"
+author: "Σωκράτης Λιάκος"
+date: "2026-10-26"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+mainfont: Arial
+monofont: Consolas
+---
+
+"Μετατρέπω" έναν 2^8 full FD που θα απαιτούσε 256 επαναλήψεις σε εναν 2^(8-4) FFD με 2^4=16 επαναλήψεις.
+
+Ξεκινάω φτάχνοντας τον πίνακα σχεδιασμού με τις 8 κύριες επιδράσεις και κάνω 16 επαναλήψεις παίρνοντας αυτές τις αποκρίσεις που έχω στο διάνυσμα. 
+
+```{r}
+suppressPackageStartupMessages(library(FrF2))
+
+# Sxediasmos kai dedomena
+ffd_design <- FrF2(nruns = 16, nfactors = 8, 
+                   factor.names = c("A", "B", "C", "D", "E", "F", "G", "H"), 
+                   randomize = FALSE)
+
+y_values <- c(12.5, 14.1, 10.8, 16.2, 11.0, 15.3, 9.7, 18.0, 
+              13.1, 14.8, 11.5, 17.1, 10.5, 15.9, 8.9, 19.2)
+
+ffd_design <- add.response(ffd_design, response = y_values)
+```
+
+Τρέχω ανάλυση παλινδρόμησης στο κορεσμένο μοντέλο ωστόσο δεν έχω διαθέσιμους βαθμούς ελευθερίας για να τρέξω anova και να υπολογίσω F statistic και p values.
+
+Άρα ,υπολογίζω απλά τις επιδράσεις, διπλασιάζοντας τους συντελεστές του γραμμικού μοντέλου.
+
+Με βάση το μοντέλο παλινδρόμησης κάνω Daniel plot και Lenth's test για να δω γραφικά αλλά και με μεγαλύτερη βεβαιότητα ποιές είναι οι σημαντικές κύριες επιδράσεις και αλληλεπιδράσεις, ώστε να τρέξω ANOVA με αυτές, μιας και θα έχω αρκετόυς βαθμούς ελευθερίας για να υπολογίσω την F.
+
+```{r}
+# Koresmeno montelo
+sat_model <- lm(y_values ~ .^2, data = ffd_design)
+
+# Pollaplasiazw x2 gia na metatrepsw tous suntelestes palindromhshs se epidraseis
+effects <- na.omit(2 * coef(sat_model)[-1]) 
+
+# Elegxos Lenth
+s0 <- 1.5 * median(abs(effects))
+PSE <- 1.5 * median(abs(effects[abs(effects) < 2.5 * s0]))
+
+df_lenth <- 15 / 3
+ME <- qt(0.975, df_lenth) * PSE
+SME <- qt((1 + 0.95^(1/15)) / 2, df_lenth) * PSE
+
+# Apotelesmata Lenth
+lenth_results <- data.frame(
+  Effect_Size = effects,
+  Absolute_Size = abs(effects),
+  Passes_ME = abs(effects) > ME,   
+  Passes_SME = abs(effects) > SME  
+)
+cat("Lenth's Test Thresholds:\n")
+cat("Pseudo Standard Error (PSE):", PSE, "\n")
+cat("Margin of Error (ME):       ", ME, "\n")
+cat("Simultaneous ME (SME):    ", SME, "\n\n")
+
+print(lenth_results[order(-abs(lenth_results$Effect_Size)), ])
+
+# Daniel Plot
+DanielPlot(ffd_design, half = TRUE, alpha = 0.05, main = "Half-Normal Daniel Plot")
+
+```
+
+Με βάση το Daniel plot και τον έλεγχο του Lenth, καταλήγω σε ένα μοντέλο με τα Α,Β,C,AB,AC (στην πραγματικότα, με βάση το ME και τον έλεγχο του Daniel, σημαντικά ειναι τα Α,ΑΒ,AC, ωστόσο βάζω και τις κύριες επιδράσεις Β και C που εμπλέκονται στις δύο σημαντικές αλληλεπιδράσεις, μιας και όταν  αλληλεπιδράσεις είναι σημαντικές, τότε πρέπει να συμπεριληφθούν και όλες οι επιμέρους κύριες επιδράσεις .)
+
+```{r}
+# Montelo me 3 k.e kai 2 allhlepidraseis 2hs taxhs
+reduced_model <- lm(y_values ~ A + B + C + A:B + A:C, data = ffd_design)
+
+# Pinakas ANOVA
+anova_results <- anova(reduced_model)
+print(anova_results)
+
+# Ypoloipa
+res <- residuals(reduced_model)
+
+# Elegxoi kanonikothtas kai omoskedastikothtas
+shapiro_res <- shapiro.test(res)
+print(shapiro_res)
+
+# 
+qqnorm(res, pch = 19, col = "blue", main = "Normal Q-Q Plot of Residuals")
+qqline(res, col = "red", lwd = 2)
+
+# 
+plot(fitted(reduced_model), res, 
+     pch = 19, col = "darkgreen",
+     xlab = "Fitted Values", ylab = "Residuals",
+     main = "Residuals vs Fitted")
+abline(h = 0, lty = 2, col = "gray")
+
+
+aliases(sat_model)
+```
+
+
+Επειδή έχουμε Resolution IV (η μικρότερη λέξη στην ορίζουσα σχέση έχει 4 γράμματα), ξέρουμε ότι οι κύριες επιδράσεις είναι καθαρές, οπότε στην περίπτωσή μας, η σημαντική επίδραση του Α, συμπεραίνουμε ότι οφείλεται στο Α αυτό καθ'αυτό, μιας και δεν είναι ταυτόσημο με άλλη κ.ε.
+
+Για τα ΑΒ, AC, τσεκάρουμε τις ταυτόσημες σχέσεις [## A:B = C:E = D:F = G:H ## A:C = B:E = D:G = F:H] κλπ. Αφόυ στο Daniel plot o A φάνηκε να έχει μακράν την μεγαλύτερη επίδραση, τότε μπορώ να συμπεράνω εύκολα ότι είναι πολύ πιο πιθανό να υπάρχουν αλληλεπιδράσεις ΑΒ και AC, απότι κάποια από τις άλλες.
+
+Με βάση το μοντέλο,όντως οι Α, ΑΒ και AC είναι σημαντικές και τα διαγράμματα κανονικότητας και ομοσκεδαστικότητας είναι ικανοποιητικά.
