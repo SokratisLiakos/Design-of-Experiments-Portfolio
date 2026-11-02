@@ -1,0 +1,90 @@
+---
+title: "DOE 3^2 FD"
+author: "Σωκράτης Λιάκος"
+date: "2026-11-02"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+mainfont: Arial
+monofont: Consolas
+---
+Ξεκινάω βάζοντας τα δεδομένα μου σε ένα dataframe με την τυπική διάταξη άνα στήλη για 3^2 παραγοντικούς σχεδιασμούς.
+
+```{r}
+# Kathe grammh antistoixei se kathe keli me  typikh diataksh gia 3^2 dhladh me vash tis sthles (00,10,20 kok):
+
+# A: 0 (15), 1 (20), 2 (25)   |   B: 0 (125), 1 (150), 2 (175)
+
+cell_data <- matrix(c(
+  -2, -1,   # A=0, B=0
+   0,  2,   # A=1, B=0
+  -1,  0,   # A=2, B=0
+  -3,  0,   # A=0, B=1
+   1,  3,   # A=1, B=1
+   5,  6,   # A=2, B=1
+   2,  3,   # A=0, B=2
+   4,  6,   # A=1, B=2
+   0, -1    # A=2, B=2
+), ncol = 2, byrow = TRUE)
+
+
+Y      <- as.vector(t(cell_data))
+A_code <- rep(c(0, 1, 2, 0, 1, 2, 0, 1, 2), each = 2)
+B_code <- rep(c(0, 0, 0, 1, 1, 1, 2, 2, 2), each = 2)
+
+df <- data.frame(A = A_code, B = B_code, Y = Y)
+```
+
+Φτιάχνω τις αντιθέσεις για anova και παλινδρόμηση και ελέγχω την ορθογωνιότητα ώστε να σιγουρευτώ ότι η ανάλυση θα είναι ορθή.
+
+```{r}
+# Antitheseis gia anova
+df$A_factor <- factor(df$A, levels = 0:2, ordered = TRUE)
+df$B_factor <- factor(df$B, levels = 0:2, ordered = TRUE)
+
+# Antitheseis gia regression
+df$AL <- df$A - 1;  df$AQ <- 3 * (df$A - 1)^2 - 2
+df$BL <- df$B - 1;  df$BQ <- 3 * (df$B - 1)^2 - 2
+
+# Elegxos orthogonikothtas sthlwn
+crossprod(as.matrix(df[, c("AL", "AQ", "BL", "BQ")]))
+```
+
+Τρέχω το μοντέλο ανάλυσης διακύμανσης και βλέπω ότι στο 5% είναι σημαντικά τα AL, AQ, BL, AL×BL, AL×BQ και AQ×BQ, ενώ τα BQ και AQ×BL δεν είναι.
+
+```{r}
+# Montelo me diaxwrismo twn paragontwn se grammikh kai tetragwnikh epidrash
+model_aov <- aov(Y ~ A_factor * B_factor, data = df)
+summary(model_aov,
+        split = list(A_factor = list(AL = 1, AQ = 2),
+                     B_factor = list(BL = 1, BQ = 2)))
+```
+
+Κάνω την παλινδρόμηση.
+
+```{r}
+# Full modelo ara to tetragwno toy t isoutai me to F toy anova
+model_full <- lm(Y ~ (AL + AQ) * (BL + BQ), data = df)
+summary(model_full)
+round(coef(summary(model_full))[, "t value"]^2, 3)
+
+# Reduced modelo
+model_red <- lm(Y ~ AL + AQ + BL + AL:BL + AL:BQ + AQ:BQ, data = df)
+anova(model_red, model_full)
+```
+
+Τρέχω την παλινδρόμηση και από τα residual SS (19,6 με 11 df για το μειωμένο, 13 με 9 df για το πλήρες) βγαίνει F ≈ 2.3 και p ≈ 0.15. Άρα η αφαίρεση των BQ και AQ:BL δεν χειροτερεύει σημαντικά το μοντέλο.
+
+Τέλος, από τους ελέγχους, γραφικούς και μη, δεν υπάρχουν στοιχεία για την απόρριψη της κανονικότητας (Shapiro Wilk's w ~0.92 ,p=.13, βέβαια λόγω του μικρού n=18, ο έλεγχος δεν έχει μεγάλη ισχύ).
+
+```{r}
+# Shapiro-Wilk 
+res <- residuals(model_aov)
+shapiro.test(res)
+
+# Q-Q plot
+qqnorm(res, pch = 16, col = "blue", main = "Normal Q-Q Plot of Residuals")
+qqline(res, col = "red", lwd = 2)
+```
+
