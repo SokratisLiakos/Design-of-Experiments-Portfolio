@@ -7,7 +7,9 @@ A collection of DoE projects and experimental designs completed during my MSc in
 * **[01. Fractional Factorial Design](2-8-4-ffd)**: A $2^{8-4}$ fractional factorial design utilizing Lenth's method and Daniel plots to identify significant effects and interactions. Insignificant factors were pooled to gain degrees of freedom for ANOVA, alongside standard diagnostic checks.
 * **[02. Factorial Design with Center Points](./2-3-center-points/)**: A $2^3$ factorial design incorporating 5 center points to test for curvature and determine the necessity of Response Surface Methodology (RSM) like a Central Composite Design (CCD). Includes verification of ANOVA assumptions.
 * **[03. Unreplicated Factorial Design](2-4-unreplicated-fd)**: Applied Lenth's method to identify significant effects in an unreplicated ($n=1$) $2^4$ design. The design was subsequently projected into a replicated ($n=2$) $2^3$ design to enable formal ANOVA testing.
-* **[04. 3^2 Factorial Design](3-2-fd)**: A $3^2$ factorial design using linear and quadratic orthogonal constrasts to separate the sum of squares for each factor and its interactions thus splitting the degrees of freedom and using anova to find the significant effects and running regression comparing the full model to the reduced. Tests to check noramlity are ran.
+* **[04. 3^2 Factorial Design](3-2-fd)**: A $3^2$ factorial design using linear and quadratic orthogonal contrasts to partition the sum of squares and degrees of freedom for factors and interactions. This includes using ANOVA to identify significant effects, running regression to compare full versus reduced models, and conducting normality tests.
+
+
 ## Tools & Libraries
 
 * **Language:** R
