@@ -8,6 +8,7 @@ A collection of DoE projects and experimental designs completed during my MSc in
 * **[02. Factorial Design with Center Points](./2-3-center-points/)**: A $2^3$ factorial design incorporating 5 center points to test for curvature and determine the necessity of Response Surface Methodology (RSM) like a Central Composite Design (CCD). Includes verification of ANOVA assumptions.
 * **[03. Unreplicated Factorial Design](2-4-unreplicated-fd)**: Applied Lenth's method to identify significant effects in an unreplicated ($n=1$) $2^4$ design. The design was subsequently projected into a replicated ($n=2$) $2^3$ design to enable formal ANOVA testing.
 * **[04. 3^2 Factorial Design](3-2-fd)**: A $3^2$ factorial design using linear and quadratic orthogonal contrasts to partition the sum of squares and degrees of freedom for factors and interactions. This includes using ANOVA to identify significant effects, running regression to compare full versus reduced models, and conducting normality tests.
+* **[05. Central Composite Design](CCD)**: A central composite design (CCD) for three factors with 20 runs: 8 factorial, 6 axial (rotatable, $\alpha = 8^{1/4} \approx 1.682$) and 6 center points. This includes fitting a second-order response surface model in R (`lm` and the `rsm` package), using ANOVA with a lack-of-fit test, checking residual diagnostics, and finding the stationary point with canonical analysis, visualized with contour and 3D surface plots.
 
 
 ## Tools & Libraries
